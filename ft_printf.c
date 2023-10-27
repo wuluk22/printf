@@ -6,7 +6,7 @@
 /*   By: clegros <clegros@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/16 11:48:50 by clegros           #+#    #+#             */
-/*   Updated: 2023/10/17 14:13:59 by clegros          ###   ########.fr       */
+/*   Updated: 2023/10/27 13:37:16 by clegros          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,11 +16,14 @@ int	ft_putchar(int c)
 {
 	return (write(1, &c, 1));
 }
+
 int	ft_putstr(char *str)
 {
 	int	count;
 
 	count = 0;
+	if (str == NULL)
+		return (ft_putstr("(null)"));
 	while (*str != '\0')
 	{
 		ft_putchar((int)*str);
@@ -30,16 +33,18 @@ int	ft_putstr(char *str)
 	return (count);
 }
 
-int	ft_putdigit(long n, int base)
+int	ft_putdigit(long n, int base, int x)
 {
 	int		count;
 	char	*symbols;
 
 	symbols = "0123456789abcdef";
+	if (x == 1)
+		symbols = "0123456789ABCDEF";
 	if (n < 0)
 	{
 		write(1, "-", 1);
-		return (ft_putdigit(-n, base) + 1);
+		return (ft_putdigit(-n, base, x) + 1);
 	}
 	else if (n < base)
 	{
@@ -47,8 +52,8 @@ int	ft_putdigit(long n, int base)
 	}
 	else
 	{
-		count = ft_putdigit(n / base, base);
-		return (count + ft_putdigit(n % base, base));
+		count = ft_putdigit(n / base, base, x);
+		return (count + ft_putdigit(n % base, base, x));
 	}
 }
 
@@ -61,26 +66,33 @@ int	ft_format(va_list ap, char format)
 		len += ft_putchar(va_arg(ap, int));
 	else if (format == 's')
 		len += ft_putstr(va_arg(ap, char *));
-//	else if (format == 'p')
-//		len += ft_
+	else if (format == 'p')
+		len += ft_putptr(va_arg(ap, void *));
 	else if (format == 'd' || format == 'i')
-		len += ft_putdigit((long)(va_arg(ap, int)), 10);
+		len += ft_putdigit((long)(va_arg(ap, int)), 10, 0);
 	else if (format == 'u')
-		len += (unsigned)(ft_putdigit((long)(va_arg(ap, int)), 10));
+		len += ft_putuns(va_arg(ap, unsigned int));
 	else if (format == 'x' || format == 'X')
-		len += ft_putdigit((long)(va_arg(ap, unsigned int)), 16);
-//	else if (format == '%')
-//		len += ft_
+	{
+		if (format == 'x')
+			len += ft_putdigit((long)(va_arg(ap, unsigned int)), 16, 0);
+		else if (format == 'X')
+			len += ft_putdigit((long)(va_arg(ap, unsigned int)), 16, 1);
+	}
+	else if (format == '%')
+		len += ft_putchar('%');
 	return (len);
 }
 
-int ft_printf(const char *str, ...)
+int	ft_printf(const char *str, ...)
 {
 	va_list	args;
 	size_t	len;
 
 	va_start(args, str);
 	len = 0;
+	if (str == NULL)
+		return (0);
 	while (*str != '\0')
 	{
 		if (*str == '%')
@@ -91,14 +103,4 @@ int ft_printf(const char *str, ...)
 	}
 	va_end(args);
 	return (len);
-}
-
-int	main()
-{
-	int	count;
-
-	count = ft_printf("%d\n", 2);
-	ft_printf("chars written : %d\n", count);
-	count = printf("%d\n", 2);
-	printf("chars written : %d\n", count);
 }
